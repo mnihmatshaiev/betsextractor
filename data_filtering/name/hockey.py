@@ -52,4 +52,8 @@ def filter_special_names(line):
         return False
     if re.match(r'.*/.*', line):
         return False
+    if re.match(r'.*Овертайм.*', line, re.IGNORECASE):
+        return False
+    if re.match(r'.*Серия буллитов.*', line, re.IGNORECASE):
+        return False
     return True
