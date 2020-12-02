@@ -1,6 +1,7 @@
 import pandas as pd
 from data_normalization.score import score_matcher
 from data_normalization.time import time_matcher_default
+import string
 
 
 def check_len(line):
@@ -64,18 +65,34 @@ def filter_file(input_file, output_file, key_to_filter_func, keys_to_drop):
     new_data.to_csv(output_file, index=False, float_format='%.6f')
 
 
-def select_by_key(data, key_to_val):
+def select_for_owner(data, owner_name):
     new_data = data.copy(deep=True)
-    for key in key_to_val:
-        print(f'Select {key}')
-        new_data = new_data[new_data[key] == key_to_val[key]]
-    return new_data
+    new_data_ex = new_data.loc[new_data['owner'] == owner_name]
+    new_data_full = new_data.loc[(new_data['owner'] == owner_name) | (new_data['guest'] == owner_name)]
+    return new_data_ex, new_data_full
 
 
-def select_from_file(input_file, output_file, key_to_val):
+def select_for_guest(data, guest_name):
+    new_data = data.copy(deep=True)
+    new_data_ex = new_data.loc[new_data['guest'] == guest_name]
+    new_data_full = new_data.loc[(new_data['owner'] == guest_name) | (new_data['guest'] == guest_name)]
+    return new_data_ex, new_data_full
+
+
+def select_from_file(input_file, owner_name, guest_name):
     print(f'Read file')
     data = pd.read_csv(input_file, header=0)
-    new_data = select_by_key(data, key_to_val)
+
+    print(f'Select owner')
+    owner_data, owner_full_data = select_for_owner(data, owner_name)
+
+    print(f'Select guest')
+    guest_data, guest_full_data = select_for_guest(data, guest_name)
 
     print(f'Write to file')
-    new_data.to_csv(output_file, index=False, float_format='%.6f')
+    owner_short_name = owner_name.translate({ord(c): None for c in string.whitespace})
+    guest_short_name = guest_name.translate({ord(c): None for c in string.whitespace})
+    owner_data.to_csv(f'{owner_short_name}_owner.csv', index=False)
+    owner_full_data.to_csv(f'{owner_short_name}_full.csv', index=False)
+    guest_data.to_csv(f'{guest_short_name}_guest.csv', index=False)
+    guest_full_data.to_csv(f'{guest_short_name}_full.csv', index=False)
